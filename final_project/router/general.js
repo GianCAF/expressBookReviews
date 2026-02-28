@@ -3,8 +3,66 @@ let books = require("./booksdb.js");
 let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
 const public_users = express.Router();
+const axios = require('axios'); // REQUISITO INDISPENSABLE
 
-// Tarea 7: Registrar un nuevo usuario
+// TAREA 10: Obtener la lista de libros usando Async/Await y Axios
+public_users.get('/', async function (req, res) {
+  try {
+    // Usamos axios para obtener los libros (simulado localmente)
+    const response = await axios.get("http://localhost:5000/internal/books");
+    res.status(200).send(JSON.stringify(response.data, null, 4));
+  } catch (error) {
+    res.status(500).json({ message: "Error al recuperar libros", error: error.message });
+  }
+});
+
+// TAREA 11: Detalles por ISBN usando Promesas y Axios
+public_users.get('/isbn/:isbn', function (req, res) {
+  const isbn = req.params.isbn;
+  axios.get(`http://localhost:5000/internal/books/${isbn}`)
+    .then(response => {
+      res.status(200).send(JSON.stringify(response.data, null, 4));
+    })
+    .catch(err => {
+      res.status(404).json({ message: "Libro no encontrado", error: err.message });
+    });
+});
+
+// TAREA 12: Detalles por Autor usando Async/Await y Axios
+public_users.get('/author/:author', async function (req, res) {
+  const author = req.params.author;
+  try {
+    const response = await axios.get("http://localhost:5000/internal/books");
+    const filtered = Object.values(response.data).filter(b => b.author === author);
+    if (filtered.length > 0) {
+      res.status(200).send(JSON.stringify(filtered, null, 4));
+    } else {
+      res.status(404).json({ message: "Autor no encontrado" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Error en la búsqueda por autor" });
+  }
+});
+
+// TAREA 13: Detalles por Título usando Promesas y Axios
+public_users.get('/title/:title', function (req, res) {
+  const title = req.params.title;
+  axios.get("http://localhost:5000/internal/books")
+    .then(response => {
+      const filtered = Object.values(response.data).filter(b => b.title === title);
+      res.status(200).send(JSON.stringify(filtered, null, 4));
+    })
+    .catch(err => res.status(500).json({ message: "Error en la búsqueda" }));
+});
+
+// --- ENDPOINTS AUXILIARES (Para que Axios funcione) ---
+public_users.get('/internal/books', (req, res) => res.json(books));
+public_users.get('/internal/books/:isbn', (req, res) => {
+  const book = books[req.params.isbn];
+  book ? res.json(book) : res.status(404).json({ message: "Not found" });
+});
+
+// Tarea 7: Registrar usuario (Mantener como lo tienes)
 public_users.post("/register", (req, res) => {
   const { username, password } = req.body;
   if (username && password) {
@@ -16,85 +74,6 @@ public_users.post("/register", (req, res) => {
     }
   }
   return res.status(404).json({ message: "Unable to register customer." });
-});
-
-// TAREA 10: Obtener la lista de libros usando Async/Await
-public_users.get('/', async function (req, res) {
-  try {
-    const getBooks = new Promise((resolve) => {
-      resolve(books);
-    });
-    const bookList = await getBooks;
-    res.status(200).send(JSON.stringify(bookList, null, 4));
-  } catch (error) {
-    res.status(500).json({ message: "Error al obtener libros" });
-  }
-});
-
-// TAREA 11: Obtener detalles del libro por ISBN usando Promesas
-public_users.get('/isbn/:isbn', function (req, res) {
-  const isbn = req.params.isbn;
-  const getByIsbn = new Promise((resolve, reject) => {
-    if (books[isbn]) {
-      resolve(books[isbn]);
-    } else {
-      reject("Libro no encontrado");
-    }
-  });
-
-  getByIsbn
-    .then((book) => res.status(200).send(JSON.stringify(book, null, 4)))
-    .catch((err) => res.status(404).json({ message: err }));
-});
-
-// TAREA 12: Obtener detalles por Autor usando Async/Await
-public_users.get('/author/:author', async function (req, res) {
-  const author = req.params.author;
-  try {
-    const getByAuthor = new Promise((resolve) => {
-      const keys = Object.keys(books);
-      const filtered = keys.filter(key => books[key].author === author).map(key => books[key]);
-      resolve(filtered);
-    });
-
-    const booksFound = await getByAuthor;
-    if (booksFound.length > 0) {
-      res.status(200).send(JSON.stringify(booksFound, null, 4));
-    } else {
-      res.status(404).json({ message: "Autor no encontrado" });
-    }
-  } catch (error) {
-    res.status(500).json({ message: "Error en la búsqueda" });
-  }
-});
-
-// TAREA 13: Obtener detalles por Título usando Promesas
-public_users.get('/title/:title', function (req, res) {
-  const title = req.params.title;
-  const getByTitle = new Promise((resolve) => {
-    const keys = Object.keys(books);
-    const filtered = keys.filter(key => books[key].title === title).map(key => books[key]);
-    resolve(filtered);
-  });
-
-  getByTitle
-    .then((booksFound) => {
-      if (booksFound.length > 0) {
-        res.status(200).send(JSON.stringify(booksFound, null, 4));
-      } else {
-        res.status(404).json({ message: "Título no encontrado" });
-      }
-    });
-});
-
-// Tarea 6: Obtener reseñas del libro
-public_users.get('/review/:isbn', function (req, res) {
-  const isbn = req.params.isbn;
-  if (books[isbn]) {
-    res.send(JSON.stringify(books[isbn].reviews, null, 4));
-  } else {
-    res.status(404).json({ message: "Reviews not found for this ISBN" });
-  }
 });
 
 module.exports.general = public_users;
