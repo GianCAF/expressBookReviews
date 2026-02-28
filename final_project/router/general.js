@@ -111,4 +111,13 @@ public_users.post("/register", (req, res) => {
   return res.status(404).json({ message: "Unable to register customer." });
 });
 
+// Tarea 6: Obtener reseñas por ISBN
+public_users.get('/review/:isbn', function (req, res) {
+  const book = books[req.params.isbn];
+  if (book) {
+    return res.status(200).json(book.reviews);
+  }
+  return res.status(404).json({ message: "Book not found" });
+});
+
 module.exports.general = public_users;

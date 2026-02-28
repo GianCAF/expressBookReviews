@@ -19,6 +19,16 @@ const authenticatedUser = (username, password) => {
   return validusers.length > 0;
 }
 
+regd_users.get("/review/:isbn", (req, res) => {
+  const isbn = req.params.isbn;
+  const book = books[isbn];
+  if (book) {
+    return res.status(200).json(book.reviews);
+  } else {
+    return res.status(404).json({ message: `Book with ISBN ${isbn} not found` });
+  }
+});
+
 // Tarea 8: Iniciar sesión (Login) - Corregido a JSON
 regd_users.post("/login", (req, res) => {
   const username = req.body.username;
@@ -37,7 +47,7 @@ regd_users.post("/login", (req, res) => {
       accessToken, username
     }
     // La IA espera este formato JSON específico
-    return res.status(200).json({ message: "User successfully logged in" });
+    return res.status(200).json({ message: "Login successful!" });
   } else {
     return res.status(208).json({ message: "Invalid Login. Check username and password" });
   }
