@@ -8,11 +8,11 @@ const axios = require('axios'); // REQUISITO INDISPENSABLE
 // TAREA 10: Obtener la lista de libros usando Async/Await y Axios
 public_users.get('/', async function (req, res) {
   try {
-    // Usamos axios para obtener los libros (simulado localmente)
     const response = await axios.get("http://localhost:5000/internal/books");
-    res.status(200).send(JSON.stringify(response.data, null, 4));
+    return res.status(200).json(response.data);
   } catch (error) {
-    res.status(500).json({ message: "Error al recuperar libros", error: error.message });
+    // Manejo de error si el servicio interno falla
+    return res.status(500).json({ message: "Error fetching books", error: error.message });
   }
 });
 
@@ -20,12 +20,8 @@ public_users.get('/', async function (req, res) {
 public_users.get('/isbn/:isbn', function (req, res) {
   const isbn = req.params.isbn;
   axios.get(`http://localhost:5000/internal/books/${isbn}`)
-    .then(response => {
-      res.status(200).send(JSON.stringify(response.data, null, 4));
-    })
-    .catch(err => {
-      res.status(404).json({ message: "Libro no encontrado", error: err.message });
-    });
+    .then(response => res.status(200).json(response.data))
+    .catch(err => res.status(404).json({ message: "ISBN not found", error: err.message }));
 });
 
 // TAREA 12: Detalles por Autor usando Async/Await y Axios
